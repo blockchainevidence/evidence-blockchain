@@ -9,6 +9,7 @@ UPLOAD_FOLDER = "uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
 
 class Block:
@@ -69,13 +70,14 @@ def upload():
 
     file = request.files["file"]
     investigator = request.form["investigator"]
+    case_id = request.form["caseid"]
 
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(filepath)
 
     file_hash = hash_file(filepath)
 
-    blockchain.add_block(file.filename, file_hash, investigator)
+blockchain.add_block(f"{case_id} - {file.filename}", file_hash, investigator)
 
     return redirect("/")
 
