@@ -130,35 +130,34 @@ Upload Evidence File<br>
 
 <h2>Blockchain Ledger</h2>
 
+<div style="display:flex;flex-wrap:wrap;align-items:center">
+
 {% for block in chain %}
 
-<div class="block">
+<div style="background:#fafafa;border:2px solid #2c7be5;
+padding:15px;margin:10px;border-radius:8px;width:250px">
 
-<b>Block ID:</b> {{block.index}} <br>
+<b>Block ID:</b> {{block.index}} <br><br>
 
-<b>Timestamp:</b> {{block.timestamp}} <br>
+<b>Evidence:</b> {{block.evidence_name}} <br>
 
-<b>Evidence File:</b> {{block.evidence_name}} <br>
+<b>Handler:</b> {{block.investigator}} <br><br>
 
-<b>Evidence Handler:</b> {{block.investigator}} <br>
-
-<b>Evidence Hash:</b>
-
-<div class="hash">
-
-{{block.evidence_hash[:20]}}...{{block.evidence_hash[-20:]}}
-
-</div>
-
-<b>Previous Block:</b>
+<b>Hash</b><br>
 
 <div class="hash">
-
-{{block.previous_hash[:20]}}...{{block.previous_hash[-20:]}}
-
+{{block.evidence_hash[:12]}}...{{block.evidence_hash[-12:]}}
 </div>
 
 </div>
+
+{% if not loop.last %}
+
+<div style="font-size:30px;margin:10px">
+→
+</div>
+
+{% endif %}
 
 {% endfor %}
 
