@@ -5,50 +5,39 @@ Blockchain-Based Chain of Custody System for Digital Evidence
 
 
 
-
-
 Overview
 
-Digital investigations rely heavily on the chain of custody, which ensures that evidence remains authentic and unaltered from the moment it is collected until it is presented in court.
+Digital investigations require strict handling of evidence to ensure that it remains authentic and unchanged from the time it is collected until it is presented in court. This process is known as the Chain of Custody.
 
-This project demonstrates a Blockchain-Based Chain of Custody System for Digital Evidence. The system records evidence handling events in a blockchain-style ledger and uses SHA-256 cryptographic hashing to detect any tampering with digital files.
+This project demonstrates a prototype Blockchain-Based Chain of Custody System that records evidence handling events using blockchain concepts and SHA-256 cryptographic hashing. The system provides a tamper-evident ledger for tracking digital evidence.
 
-By combining blockchain principles with a simple web interface, the system provides a transparent and tamper-evident method for managing digital forensic evidence.
+Features
 
-Key Features
+Upload digital evidence files
 
-• Upload digital evidence files
-• Generate SHA-256 hash fingerprints
-• Store records in a linked blockchain ledger
-• Maintain tamper-evident evidence history
-• Verify file integrity
-• Download evidence logs for auditing
-• Simple web interface for investigators
+Generate SHA-256 cryptographic hash fingerprints
+
+Store records in a blockchain-style ledger
+
+Maintain a tamper-evident chain of evidence blocks
+
+Verify file integrity
+
+Download evidence logs for auditing
+
+Web interface for investigators
 
 How the System Works
 
-The system simulates blockchain behaviour to track digital evidence.
 Evidence Upload
-      │
-      ▼
-SHA-256 Hash Generation
-      │
-      ▼
-Blockchain Block Creation
-      │
-      ▼
-Linked Block Storage
-      │
-      ▼
-Integrity Verification
+The investigator uploads a digital evidence file.
 
-Step-by-step process
+Hash Generation
+The system generates a SHA-256 hash, which acts as a unique fingerprint of the file.
 
-Investigator uploads an evidence file.
+Block Creation
 
-The system generates a SHA-256 hash for the file.
-
-A new block is created containing:
+Each block stores the following information:
 
 Case ID
 
@@ -62,50 +51,36 @@ File hash
 
 Previous block hash
 
-The block is appended to the blockchain ledger.
+Blockchain Linking
 
-Evidence can later be verified by recomputing the file hash and comparing it with the stored record.
+Each block references the hash of the previous block, creating a linked chain of blocks.
 
+Evidence Verification
 
-+----------------------------+
-|        Web Interface       |
-|         (Flask)            |
-+-------------+--------------+
-              |
-              ▼
-+----------------------------+
-|   Evidence Upload Module   |
-+-------------+--------------+
-              |
-              ▼
-+----------------------------+
-| SHA-256 Hash Generation    |
-+-------------+--------------+
-              |
-              ▼
-+----------------------------+
-| Blockchain Ledger Storage  |
-| (Linked Blocks Structure)  |
-+-------------+--------------+
-              |
-              ▼
-+----------------------------+
-| Evidence Integrity Check   |
-+----------------------------+
+To verify evidence integrity, the system recomputes the file hash and compares it with the stored hash.
 
-
+System Architecture
+User Interface (Flask)
+        │
+        ▼
+Evidence Upload Module
+        │
+        ▼
+SHA-256 Hash Generation
+        │
+        ▼
+Blockchain Ledger (Linked Blocks)
+        │
+        ▼
+Evidence Integrity Verification
 Technologies Used
 Technology	Purpose
 Python	Core programming language
 Flask	Web application framework
-SHA-256	Cryptographic hashing for evidence integrity
+SHA-256	Cryptographic hashing for file integrity
 HTML / CSS	User interface
 Gunicorn	Production server
 Render	Cloud deployment
-
-
-
-
 Project Structure
 evidence-blockchain
 │
@@ -116,28 +91,24 @@ evidence-blockchain
 │
 └── templates
     └── index.html
-
-
-
-
-    Installation
-Clone the repository
+Installation
+Clone the Repository
 git clone https://github.com/YOUR_USERNAME/evidence-blockchain.git
 cd evidence-blockchain
-Create virtual environment
+Create Virtual Environment
 python3 -m venv venv
 source venv/bin/activate
-Install dependencies
+Install Dependencies
 pip install -r requirements.txt
-Run the application
+Run the Application
 python app.py
 
-Open your browser:
+Open your browser and visit:
 
 http://localhost:5000
 Deployment
 
-The application can be deployed using cloud platforms such as:
+This application can be deployed using platforms such as:
 
 Render
 
@@ -147,30 +118,32 @@ Railway
 
 AWS
 
-For this project, deployment was performed using Render, allowing the application to run as an online web service.
+For this project, deployment was performed using Render, which hosts the Flask application and provides a public URL.
 
-Example Use Case
+Example Workflow
 
-Investigator uploads a digital evidence file.
+Upload digital evidence
 
-The system generates a SHA-256 fingerprint.
+System generates SHA-256 fingerprint
 
-A blockchain block is created with evidence metadata.
+Blockchain block is created
 
-The evidence record becomes part of the tamper-evident ledger.
+Evidence integrity can be verified
 
-Evidence integrity can later be verified during investigation or court proceedings.
+Evidence logs can be downloaded
 
 Future Improvements
 
-Possible enhancements for future versions include:
+Smart contract integration with Ethereum
 
-• Integration with Ethereum smart contracts
-• Decentralized blockchain nodes
-• Persistent database storage
-• User authentication and role management
-• Improved blockchain visualization
+Decentralized blockchain nodes
+
+Persistent database storage
+
+User authentication system
+
+Blockchain visualization dashboard
 
 Author
 
-Developed as part of an academic project exploring the use of blockchain technology in digital forensics and evidence management.
+Academic project exploring blockchain applications in digital forensics and digital evidence management.
