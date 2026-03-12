@@ -2,6 +2,7 @@ import hashlib
 import datetime
 import os
 import csv
+import json
 
 from flask import Flask, request, render_template, redirect, send_file
 
@@ -28,6 +29,33 @@ class Block:
 
 
 class Blockchain:
+    BLOCKCHAIN_FILE = "blockchain.json"
+
+def save_blockchain(chain):
+    data = []
+    for block in chain:
+        data.append(block.__dict__)
+    with open(BLOCKCHAIN_FILE, "w") as f:
+        json.dump(data, f)
+
+def load_blockchain():
+    if not os.path.exists(BLOCKCHAIN_FILE):
+        return None
+    with open(BLOCKCHAIN_FILE, "r") as f:
+        data = json.load(f)
+    chain = []
+    for b in data:
+        block = Block(
+            b["index"],
+            b["timestamp"],
+            b["evidence_name"],
+            b["evidence_hash"],
+            b["investigator"],
+            b["previous_hash"]
+        )
+        chain.append(block)
+    return chain
+    
     def __init__(self):
         self.chain = [self.create_genesis_block()]
 
@@ -48,6 +76,9 @@ class Blockchain:
 
 
 blockchain = Blockchain()
+saved_chain = load_blockchain()
+if saved_chain:
+    blockchain.chain = saved_chain
 
 
 def hash_file(filepath):
@@ -78,6 +109,7 @@ def upload():
     file_hash = hash_file(filepath)
 
 blockchain.add_block(f"{case_id} - {file.filename}", file_hash, investigator)
+save_blockchain(blockchain.chain)
 
     return redirect("/")
 
