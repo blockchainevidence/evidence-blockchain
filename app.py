@@ -1,91 +1,96 @@
 import hashlib
 import datetime
 import os
-import csv
-import json
 
-from flask import Flask, request, render_template, redirect, send_file
+from flask import Flask, request, render_template, redirect
 
 UPLOAD_FOLDER = "uploads"
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 
 class Block:
-    def __init__(self, index, timestamp, evidence_name, evidence_hash, investigator, previous_hash):
+    def __init__(self, index, timestamp, evidence_name, evidence_hash,
+                 from_person, to_person, previous_hash):
+
         self.index = index
         self.timestamp = timestamp
         self.evidence_name = evidence_name
         self.evidence_hash = evidence_hash
-        self.investigator = investigator
+        self.from_person = from_person
+        self.to_person = to_person
         self.previous_hash = previous_hash
         self.hash = self.calculate_hash()
 
     def calculate_hash(self):
-        data = f"{self.index}{self.timestamp}{self.evidence_name}{self.evidence_hash}{self.investigator}{self.previous_hash}"
+        data = f"{self.index}{self.timestamp}{self.evidence_name}{self.evidence_hash}{self.from_person}{self.to_person}{self.previous_hash}"
         return hashlib.sha256(data.encode()).hexdigest()
 
 
 class Blockchain:
-    BLOCKCHAIN_FILE = "blockchain.json"
 
-def save_blockchain(chain):
-    data = []
-    for block in chain:
-        data.append(block.__dict__)
-    with open(BLOCKCHAIN_FILE, "w") as f:
-        json.dump(data, f)
-
-def load_blockchain():
-    if not os.path.exists(BLOCKCHAIN_FILE):
-        return None
-    with open(BLOCKCHAIN_FILE, "r") as f:
-        data = json.load(f)
-    chain = []
-    for b in data:
-        block = Block(
-            b["index"],
-            b["timestamp"],
-            b["evidence_name"],
-            b["evidence_hash"],
-            b["investigator"],
-            b["previous_hash"]
-        )
-        chain.append(block)
-    return chain
-    
     def __init__(self):
-        self.chain = [self.create_genesis_block()]
+        self.chains = {}
+        self.chain_counter = 1
 
-    def create_genesis_block(self):
-        return Block(0, str(datetime.datetime.now()), "Genesis", "0", "System", "0")
+    def start_chain(self, evidence_name, evidence_hash, investigator):
 
-    def add_block(self, evidence_name, evidence_hash, investigator):
-        prev = self.chain[-1]
-        block = Block(
-            len(self.chain),
+        chain_id = self.chain_counter
+        self.chain_counter += 1
+
+        genesis = Block(
+            0,
             str(datetime.datetime.now()),
             evidence_name,
             evidence_hash,
+            "SYSTEM",
             investigator,
+            "0"
+        )
+
+        self.chains[chain_id] = {
+            "blocks": [genesis],
+            "closed": False
+        }
+
+    def transfer(self, chain_id, from_person, to_person):
+
+        chain = self.chains[chain_id]["blocks"]
+
+        prev = chain[-1]
+
+        block = Block(
+            len(chain),
+            str(datetime.datetime.now()),
+            prev.evidence_name,
+            prev.evidence_hash,
+            from_person,
+            to_person,
             prev.hash
         )
-        self.chain.append(block)
+
+        chain.append(block)
+
+    def close_chain(self, chain_id):
+        self.chains[chain_id]["closed"] = True
 
 
 blockchain = Blockchain()
-saved_chain = load_blockchain()
-if saved_chain:
-    blockchain.chain = saved_chain
 
 
 def hash_file(filepath):
+
     sha = hashlib.sha256()
 
     with open(filepath, "rb") as f:
-        while chunk := f.read(4096):
+        while True:
+            chunk = f.read(4096)
+            if not chunk:
+                break
             sha.update(chunk)
 
     return sha.hexdigest()
@@ -93,27 +98,36 @@ def hash_file(filepath):
 
 @app.route("/")
 def index():
-    return render_template("index.html", chain=blockchain.chain)
+    return render_template("index.html", chains=blockchain.chains)
 
 
-@app.route("/upload", methods=["POST"])
-def upload():
+@app.route("/start", methods=["POST"])
+def start():
 
     file = request.files["file"]
     investigator = request.form["investigator"]
-    case_id = request.form["caseid"]
 
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(filepath)
 
     file_hash = hash_file(filepath)
 
-blockchain.add_block(f"{case_id} - {file.filename}", file_hash, investigator)
-save_blockchain(blockchain.chain)
+    blockchain.start_chain(file.filename, file_hash, investigator)
 
     return redirect("/")
 
 
+@app.route("/transfer", methods=["POST"])
+def transfer():
+
+    chain_id = int(request.form["chain_id"])
+    from_person = request.form["from_person"]
+    to_person = request.form["to_person"]
+
+    blockchain.transfer(chain_id, from_person, to_person)
+
+    return redirect("/")
+    
 @app.route("/verify", methods=["POST"])
 def verify():
 
@@ -124,36 +138,24 @@ def verify():
 
     new_hash = hash_file(filepath)
 
-    for block in blockchain.chain:
-        if block.evidence_hash == new_hash:
-            return "<h3 style='color:green'>✔ Evidence VERIFIED - Integrity intact</h3>"
+    for chain in blockchain.chains.values():
+        for block in chain["blocks"]:
 
-    return "<h3 style='color:red'>⚠ WARNING: Evidence hash mismatch - Possible tampering detected</h3>"
+            if block.evidence_hash == new_hash:
+                return "<h3 style='color:green'>✔ Evidence VERIFIED - Integrity intact</h3>"
+
+    return "<h3 style='color:red'>⚠ Evidence NOT FOUND in blockchain</h3>"    
 
 
-@app.route("/download")
-def download():
+@app.route("/close", methods=["POST"])
+def close():
 
-    filename = "evidence_log.csv"
+    chain_id = int(request.form["chain_id"])
 
-    with open(filename, "w", newline="") as f:
+    blockchain.close_chain(chain_id)
 
-        writer = csv.writer(f)
-
-        writer.writerow(["Index", "Timestamp", "Evidence", "Hash", "Investigator", "Previous Hash"])
-
-        for block in blockchain.chain:
-            writer.writerow([
-                block.index,
-                block.timestamp,
-                block.evidence_name,
-                block.evidence_hash,
-                block.investigator,
-                block.previous_hash
-            ])
-
-    return send_file(filename, as_attachment=True)
+    return redirect("/")
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
