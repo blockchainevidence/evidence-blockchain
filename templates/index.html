@@ -3,12 +3,12 @@
 
 <head>
 
-<title>Blockchain Digital Evidence System</title>
+<title>Blockchain Chain of Custody</title>
 
 <style>
 
 body{
-font-family: Arial;
+font-family:Arial;
 background:#f4f6f8;
 margin:40px;
 }
@@ -22,10 +22,6 @@ border-radius:10px;
 box-shadow:0 5px 20px rgba(0,0,0,0.1);
 }
 
-h1{
-color:#1a2b4c;
-}
-
 .block{
 background:#fafafa;
 border-left:6px solid #2c7be5;
@@ -33,32 +29,10 @@ padding:15px;
 margin-top:15px;
 }
 
-.hash{
-font-family:monospace;
-font-size:13px;
-color:#555;
-}
-
-.warning{
-background:#ffe5e5;
-color:#b30000;
-padding:10px;
-border-radius:5px;
-margin-top:10px;
-}
-
-.success{
-background:#e6ffed;
-color:#0a7d2c;
-padding:10px;
-border-radius:5px;
-margin-top:10px;
-}
-
 button{
 background:#2c7be5;
 color:white;
-padding:10px 18px;
+padding:10px 15px;
 border:none;
 border-radius:5px;
 cursor:pointer;
@@ -69,7 +43,7 @@ background:#1a5fcc;
 }
 
 input{
-padding:8px;
+padding:6px;
 margin-top:5px;
 }
 
@@ -83,19 +57,13 @@ margin-top:5px;
 
 <h1>Blockchain Digital Evidence Chain of Custody</h1>
 
-<p>This system records digital evidence fingerprints on a blockchain ledger to ensure tamper-proof forensic tracking.</p>
-
 <hr>
 
-<h3>Upload Evidence</h3>
+<h2>Start New Evidence Chain</h2>
 
-<form action="/upload" method="post" enctype="multipart/form-data">
+<form action="/start" method="post" enctype="multipart/form-data">
 
-Case ID<br>
-<input name="caseid" required placeholder="CASE-2026-001">
-<br><br>
-  
-Evidence Handler Name<br>
+Investigator Name<br>
 <input name="investigator" required>
 
 <br><br>
@@ -105,13 +73,11 @@ Upload Evidence File<br>
 
 <br><br>
 
-<button type="submit">Add Evidence to Blockchain</button>
+<button type="submit">Start Chain</button>
 
 </form>
 
-<hr>
-
-<h3>Verify Evidence Integrity</h3>
+<h2>Verify Evidence Integrity</h2>
 
 <form action="/verify" method="post" enctype="multipart/form-data">
 
@@ -126,46 +92,88 @@ Upload Evidence File<br>
 
 <hr>
 
-<a href="/download">
-<button>Download Evidence Log</button>
-</a>
+<hr>
+
+<h2>Transfer Custody</h2>
+
+<form action="/transfer" method="post">
+
+Chain ID<br>
+<input name="chain_id" required>
+
+<br><br>
+
+From<br>
+<input name="from_person" required>
+
+<br><br>
+
+To<br>
+<input name="to_person" required>
+
+<br><br>
+
+<button type="submit">Transfer Custody</button>
+
+</form>
 
 <hr>
 
-<h2>Blockchain Ledger</h2>
+<h2>Submit Evidence to Court</h2>
 
-<div style="display:flex;flex-wrap:wrap;align-items:center">
+<form action="/close" method="post">
 
-{% for block in chain %}
+Chain ID<br>
+<input name="chain_id" required>
 
-<div style="background:#fafafa;border:2px solid #2c7be5;
-padding:15px;margin:10px;border-radius:8px;width:250px">
+<br><br>
 
-<b>Block ID:</b> {{block.index}} <br><br>
+<button type="submit">Close Chain</button>
+
+</form>
+
+<hr>
+
+<h2>Evidence Chains</h2>
+
+{% for chain_id, chain in chains.items() %}
+
+<h3>Chain {{chain_id}}</h3>
+
+{% for block in chain.blocks %}
+
+<div class="block">
+
+<b>Block:</b> {{block.index}} <br>
+
+<b>Time:</b> {{block.timestamp}} <br>
 
 <b>Evidence:</b> {{block.evidence_name}} <br>
 
-<b>Handler:</b> {{block.investigator}} <br><br>
+<b>From:</b> {{block.from_person}} <br>
 
-<b>Hash</b><br>
+<b>To:</b> {{block.to_person}} <br>
 
-<div class="hash">
-{{block.evidence_hash[:12]}}...{{block.evidence_hash[-12:]}}
+<b>Hash:</b> {{block.hash[:20]}}... <br>
+
+<b>Previous Hash:</b> {{block.previous_hash[:20]}}...
+
 </div>
 
-</div>
+{% endfor %}
 
-{% if not loop.last %}
-
-<div style="font-size:30px;margin:10px">
-→
-</div>
-
+{% if chain.closed %}
+<b>Status:</b> Evidence submitted to court (Chain Closed)
+{% else %}
+<b>Status:</b> Active
 {% endif %}
+
+<hr>
 
 {% endfor %}
 
 </div>
 
 </body>
+
 </html>
